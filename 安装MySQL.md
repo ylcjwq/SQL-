@@ -1,0 +1,133 @@
+# Docker 安装
+
+## 准备条件
+
+```bash
+# 安装前先卸载操作系统默认安装的docker
+sudo apt-get remove docker docker-engine docker.io containerd runc
+
+# 安装必要支持
+sudo apt install apt-transport-https ca-certificates curl software-properties-common gnupg lsb-release
+```
+
+## 准备安装
+
+```bash
+# 阿里源（推荐使用阿里的gpg KEY）
+curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# 阿里apt源
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 更新源
+sudo apt update
+sudo apt-get update
+```
+
+## 安装 docker
+
+```bash
+# 安装最新版本的Docker
+sudo apt install docker-ce docker-ce-cli containerd.io
+
+# 查看Docker版本
+sudo docker version
+
+# 查看Docker运行状态
+sudo systemctl status docker
+```
+
+## 更换源
+
+```bash
+# 进入docker目录下
+cd /etc/docker
+
+# 创建daemon.json文件
+sudo nano daemon.json
+
+# 写入内容
+ {
+  "registry-mirrors":
+    [
+        "https://ox288s4f.mirror.aliyuncs.com",
+        "https://registry.docker-cn.com",
+        "http://hub-mirror.c.163.com",
+        "https://mirror.ccs.tencentyun.com"
+    ]
+}
+# ctrl + s 保存 ，ctrl + x 退出
+```
+
+# MySQL 安装
+
+## 拉取镜像
+
+```bash
+# 拉取镜像
+docker pull mysql:8.0.20
+# 等待下载完成
+
+# 查看所有镜像
+docker images
+
+# 启动镜像
+docker run -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=123456  -d mysql:8.0.20
+
+# 查看是否启动成功
+docker ps
+```
+
+## 容器配置拷贝至宿主机
+
+```bash
+# 创建mysql-files文件
+mkdir -p /mnt/sda1/mysql8.0.20/mysql-files
+
+# 拷贝配置文件到宿主机
+docker cp  mysql:/etc/mysql /mnt/sda1/mysql8.0.20
+```
+
+## 删除容器
+
+```bash
+# 停止容器
+docker stop mysql
+
+# 删除容器
+docker rm mysql
+```
+
+## 编写启动脚本
+
+```bash
+# 进入bin目录
+cd bin
+
+# 创建mysql8.0.20.sh脚本文件
+sudo nano mysql8.0.20.sh
+
+# 写入内容
+docker run \
+-p 3306:3306 \
+--name mysql \
+--privileged=true \
+--restart unless-stopped \
+-v /mnt/sda1/mysql8.0.20/mysql:/etc/mysql \
+-v /mnt/sda1/mysql8.0.20/logs:/logs \
+-v /mnt/sda1/mysql8.0.20/data:/var/lib/mysql \
+-v /mnt/sda1/mysql8.0.20/mysql-files:/var/lib/mysql-files \
+-v /etc/localtime:/etc/localtime \
+-e MYSQL_ROOT_PASSWORD=123456 \
+-d mysql:8.0.20
+# ctrl + s 保存 ，ctrl + x 退出
+
+# 执行脚本
+sh mysql8.0.20.sh
+
+# 查看是否启动成功
+docker ps
+
+# 查看日志
+docker logs mysql
+```
