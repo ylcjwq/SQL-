@@ -131,3 +131,49 @@ docker ps
 # 查看日志
 docker logs mysql
 ```
+
+# 常见问题
+
+## docker 拉取 MySQL 一直卡住不动、下载速度缓慢
+
+daemon.json 中配置国内镜像，若配置了上面的镜像还是没有解决，可能是镜像过期了，可以在网上找找最新的镜像地址。
+
+## MySQL 登录报错 ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)
+
+脚本设置密码失败了，当前数据库应该是处于无密码的状态，使用下面的命令应该可以直接进入数据库
+
+```bash
+mysql -uroot
+```
+
+进入成功后，修改密码：
+
+```bash
+# 修改密码
+FLUSH PRIVILEGES;
+ALTER USER 'root'@'localhost' IDENTIFIED BY '123456';
+```
+
+## navicat 远程链接报错 1130 Host'xxxxxxx' is not allowed to connect to this MySQL server
+
+无权限访问，首先在服务器上进入数据库中，然后执行如下命令，修改数据库访问权限：
+
+```bash
+# 查看所有数据库
+show databases;
+
+# 进入mysql
+use mysql;
+
+# 查看所有表
+show tables;
+
+# 查看user表中的数据
+select Host, User from user;
+
+# 更新root的host为通配符
+update user set Host='%' where User='root';
+
+# 刷新
+flush privileges;
+```
